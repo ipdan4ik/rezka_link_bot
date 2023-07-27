@@ -3,9 +3,9 @@ from telegram import Update
 from telegram.ext import ApplicationBuilder, ContextTypes, CommandHandler
 
 from get_link import send_mail, receive_mail, parse_link
-from settings import config
+from settings import MAIN_CONFIG
 
-TELEGRAM_KEY = config['TELEGRAM_KEY']
+TELEGRAM_KEY = MAIN_CONFIG['TELEGRAM_KEY']
 
 
 async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
