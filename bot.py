@@ -1,4 +1,7 @@
 import asyncio
+import json
+import time
+
 from telegram import Update
 from telegram.ext import ApplicationBuilder, ContextTypes, CommandHandler
 
@@ -9,18 +12,31 @@ from loguru import logger
 TELEGRAM_KEY = MAIN_CONFIG['TELEGRAM_KEY']
 
 
+def get_link_cached(chat_id):
+    cache = json.load(open('link.json', 'r'))
+    if time.time() - cache['time'] < 3600:
+        logger.success(f'[{chat_id}] Using link from cache.')
+        return cache['link']
+
+    logger.info(f'[{chat_id}] Sending mail.')
+    send_mail()
+    logger.info(f'[{chat_id}] Receiving mail.')
+    mail = receive_mail()
+    if not mail:
+        logger.warning(f'[{chat_id}] Mail not received. Using link from cache.')
+        return cache['link']
+    hd_link = parse_link(mail)
+    logger.success(f'[{chat_id}] Got new link.')
+    return hd_link
+
+
 async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
     logger.info('Got request from user')
-    send_mail()
-    logger.info('Mail sent, waiting..')
-    await asyncio.sleep(3)
-    mail = receive_mail()
-    hd_link = parse_link(mail)
-    logger.success('link was received')
-
+    chat_id = update.effective_chat.id
+    link = get_link_cached(chat_id)
     await context.bot.send_message(
-        chat_id=update.effective_chat.id,
-        text=f'{hd_link}'
+        chat_id=chat_id,
+        text=f'{link}'
     )
 
 
